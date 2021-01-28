@@ -1,5 +1,5 @@
 #! /bin/bash
-#SBATCH --account=cp431g4
+#SBATCH --account=def-ikotsire  # cp431g4 throws error
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=3
 #SBATCH --mem-per-cpu=32M       # memory; default unit is megabytes
