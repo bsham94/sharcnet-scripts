@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
 
     unsigned int prev = 0;
     for(int i = 1; i < max; i++){
-        start[i] = prev + (max / numProcesses);
+        *(start + i) = prev + (max / numProcesses);
         if(i < (max % numProcesses)){
             // add 1
-            start[i]++;
+            *(start + i)++;
         }
-        prev = start[i];
+        prev = *(start + i);
     }
 
     if (myRank == 0) {
