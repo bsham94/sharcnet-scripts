@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv)
 {
-    int my_rank   //Rank of process
+    int my_rank;   //Rank of process
     int p;     //Number of process
     int source;
     int dest;
