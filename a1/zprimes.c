@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
     // Start MPI
     if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
         printf("[ ERROR ]");
+        return 1;
     }
 
     // Get process rank
@@ -25,7 +26,12 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
 
     // Get range
-    unsigned int start[numProcesses];
+    unsigned int* start = (unsigned int*)malloc(P * sizeof(unsigned int));
+    if (start == NULL) {
+        printf("[ ERROR ]");
+        return 1;
+    }
+
     unsigned int prev = 0;
     for(int i = 1; i < max; i++){
         start[i] = prev + (max / numProcesses);
@@ -48,5 +54,6 @@ int main(int argc, char** argv) {
         MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
     }
 
+    free(start);
     MPI_Finalize();
 }
