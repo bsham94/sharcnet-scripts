@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "mpi.h"
 #include "gmp.h"
+#include <string.h>
 
 int main(int argc, char** argv) {
     int myRank; // this rank
