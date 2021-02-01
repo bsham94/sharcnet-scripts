@@ -25,8 +25,9 @@ int main(int argc, char **argv)
         //Create rank
         sprintf(message, "Greetings from process %d!",my_rank);
         dest = 0;
+        MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
     }
-    elses
+    else
     {
         for (source = 1; source < p; source++)
         {
