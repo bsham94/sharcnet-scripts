@@ -23,14 +23,14 @@ int main(int argc, char **argv)
     if(my_rank != 0 )
     {
         //Create rank
-        sprintf(message, "Greetings from process %d!");
+        sprintf(message, "Greetings from process %d!",my_rank);
         dest = 0;
     }
     else
     {
         for (source = 1; source < p; source++)
         {
-            MPI_Recv(message, 100, MPI_CHAR, source, tag, MPI_COMM_WORLD,&status);
+            MPI_Recv(message, 100, MPI_CHAR, source, tag, MPI_COMM_WORLD, &status);
             printf("%s\n",message);
         }
     }
