@@ -10,58 +10,68 @@ int main(int argc, char **argv)
     int n = 63;
     int my_rank;   //Rank of process
     int processors;     //Number of process
-    int source;
-    int dest;
+    //int source;
     int tag = 0;
-    char message[100];
     MPI_Status status;
-    unsigned long long *ranges;
+    unsigned long int *ranges;
     //Start mpi
     MPI_Init(&argc, &argv);
     //Find process rank
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     //Find out number of processes
 	MPI_Comm_size(MPI_COMM_WORLD, &processors);
-    
-    //int k = 63;
-    //processors = 6;
-    ranges = (unsigned long long *) malloc(sizeof(unsigned long long)*processors);
-    int result = (n / processors);
-
-    for (int i = 0; i < processors; i++)
-    {
-        int number = 0;
-        if (i < (n % processors))
+    //processors = 7;
+    if(my_rank == 0 )
+    {   
+        int result = (n / (processors-1));
+        ranges = (unsigned long int*) malloc(sizeof(long long) * (processors - 1));
+        for (int i = 0; i < (processors-1); i++)
         {
-            number = i;
+            int number = 0;
+            if (i < (n % (processors-1)))
+            {
+                number = i;
+            }
+            else
+            {
+                number = n % (processors-1);
+            }
+            ranges[i] = (i * result) + number;
         }
-        else 
-        { 
-            number = n % processors;
+        for (int i = 1; i < processors; i++)
+        {
+            if (i == (processors-1))
+            {
+                MPI_Send(&(ranges[i - 1]), 1, MPI_UNSIGNED_LONG, i, tag, MPI_COMM_WORLD);
+            }
+            else
+            {
+                MPI_Send(&(ranges[i - 1]), 1, MPI_UNSIGNED_LONG, i, tag, MPI_COMM_WORLD);
+                MPI_Send(&(ranges[i]), 1, MPI_UNSIGNED_LONG, i, tag, MPI_COMM_WORLD);
+
+            }                        
         }
-        ranges[i] = (i * result) + number;
-        printf("%llu\n", ranges[i]);
+        free(ranges);
     }
-
-    
-
-
-    if(my_rank != 0 )
+    else if (my_rank == (processors -1))
     {
-        //Create rank
-        sprintf(message, "Greetings from process %d!",my_rank);
-        dest = 0;
-        MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
+        unsigned long int start = 0;
+        MPI_Recv(&start, 1, MPI_UNSIGNED_LONG, 0, tag, MPI_COMM_WORLD, &status);
+        printf("Rank: %d\n", my_rank);
+        printf("%lu\n", start);
+        printf("%lu\n", n);
     }
     else
-    {
-        for (source = 1; source < processors; source++)
-        {
-            MPI_Recv(message, 100, MPI_CHAR, source, tag, MPI_COMM_WORLD, &status);
-            printf("%s\n",message);
-        }
+    {   
+        unsigned long int start = 0;
+        unsigned long int end = 0;
+        MPI_Recv(&start, 1, MPI_UNSIGNED_LONG, 0, tag, MPI_COMM_WORLD, &status);
+        MPI_Recv(&end, 1, MPI_UNSIGNED_LONG, 0, tag, MPI_COMM_WORLD, &status);
+        printf("Rank: %d\n", my_rank);
+        printf("%lu\n",start);
+        printf("%lu\n", end-1);
     }
-    free(ranges);
+    
     MPI_Finalize();
-	return 0;
+    return 0;
 }
