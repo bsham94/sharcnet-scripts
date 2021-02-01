@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
 
     // Get range
-    unsigned int* start = (unsigned int*)malloc(P * sizeof(unsigned int));
+    unsigned int* start = (unsigned int*)malloc(numProcesses * sizeof(unsigned int));
     if (start == NULL) {
         printf("[ ERROR ]");
         return 1;
