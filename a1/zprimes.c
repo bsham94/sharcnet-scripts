@@ -28,16 +28,7 @@ int main(int argc, char** argv) {
 
     // Get range
     unsigned int* start = (unsigned int*)malloc(numProcesses * sizeof(unsigned int));
-
-    unsigned int prev = 0;
-    for(int i = 0; i < max; i++){
-        start[i] = prev + (max / numProcesses);
-        if(i < (max % numProcesses)){
-            // add 1
-            //start[i]++;
-        }
-        //prev = start[i];
-    }
+    free(start);
 
     if (myRank == 0) {
         // Main process
@@ -51,6 +42,5 @@ int main(int argc, char** argv) {
         MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
     }
 
-    free(start);
     MPI_Finalize();
 }
