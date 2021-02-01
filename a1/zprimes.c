@@ -17,10 +17,10 @@ int main(int argc, char** argv) {
     }
 
     // Get process rank
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
     // Get number of processes
-    MPI_Comm_size(MPI_COMM_WORLD, &num_processes)
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
 
     if (myRank == 0) {
         // Main process
