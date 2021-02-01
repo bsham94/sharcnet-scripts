@@ -26,7 +26,7 @@ int main(int argc, char **argv)
         sprintf(message, "Greetings from process %d!",my_rank);
         dest = 0;
     }
-    elses
+    else
     {
         for (source = 1; source < p; source++)
         {
