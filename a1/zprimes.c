@@ -1,46 +1,75 @@
 #include <stdio.h>
-#include "mpi.h"
-#include "gmp.h"
-#include <string.h>
 #include <stdlib.h>
+//#include <gmp.h>
+#include <mpi.h>
+#include <math.h>
+#include <string.h>
+#pragma warning(disable:4996)
 
-int main(int argc, char** argv) {
-    int myRank; // this rank
-    int numProcesses; // number of processes running
-    int source; // rank of the sender
-    int dest; // rank of the receiver
-    int tag = 0;
-    char message[100];
-    unsigned int max = 1000000000;
-    MPI_Status status; // return status for receive message
-
-    // Start MPI
-    if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
-        printf("[ ERROR ]");
-        return 1;
+int calculateRange(int rank, int n, int processors) {
+    int result = (n / processors);
+    int number = 0;
+    if (rank < (n % processors))
+    {
+        number = rank;
     }
+    else
+    {
+        number = n % processors;
+    }
+    return (rank * result) + number;
+}
 
-    // Get process rank
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+int main(int argc, char** argv)
+{
+    int n = 1000000000;
+    int my_rank;        //Rank of process
+    int processors;     //Number of process
+    //int source;
+    int tag = 0;
+    MPI_Status status;
+    //Start mpi
+    MPI_Init(&argc, &argv);
+    //Find process rank
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    //Find out number of processes
+    MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
-    // Get number of processes
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
-
-    // Get range
-    unsigned int* start = (unsigned int*)malloc(numProcesses * sizeof(unsigned int));
-    free(start);
-
-    if (myRank == 0) {
-        // Main process
-        for (source = 1; source < numProcesses; source++){
-            MPI_Recv(message, 100, MPI_CHAR, source, tag, MPI_COMM_WORLD, &status);
-            printf("%s\n",message);
+    if (my_rank == 0)
+    {
+    }
+    else
+    {
+        // Calculate start
+        int number = 0;
+        if ((my_rank - 1) < (n % (processors - 1)))
+        {
+            number = my_rank - 1;
         }
-    } else {
-        sprintf(message, "My starting number is");
-        dest = 0;
-        MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
+        else
+        {
+            number = n % (processors - 1);
+        }
+        unsigned long int start = calculateRange(my_rank - 1, n, processors - 1);
+        //unsigned long int start = ((my_rank - 1) * result) + number;
+        // Calculate end
+        if ((my_rank) < (n % (processors - 1)))
+        {
+            number = my_rank;
+        }
+        else
+        {
+            number = n % (processors - 1);
+        }
+        unsigned long int end = calculateRange(my_rank, n, processors - 1) - 1;
+        if (my_rank == (processors - 1)) {
+            // Final processor
+            end++;
+        }
+        //unsigned long int end = ((my_rank * result) + number) - 1;
+        printf("rank: %d, start: %lu, end: %lu\n", my_rank, start, end);
     }
 
     MPI_Finalize();
+    return 0;
 }
