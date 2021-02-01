@@ -10,6 +10,7 @@ int main(int argc, char** argv) {
     int dest; // rank of the receiver
     int tag = 0;
     char message[100];
+    unsigned int max = 1000000000;
     MPI_Status status; // return status for receive message
 
     // Start MPI
@@ -23,6 +24,18 @@ int main(int argc, char** argv) {
     // Get number of processes
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
 
+    // Get range
+    unsigned int start[numProcesses];
+    unsigned int prev = 0;
+    for(int i = 1; i < max; i++){
+        start[i] = prev + (max / numProcesses);
+        if(i < (max % numProcesses)){
+            // add 1
+            start[i]++;
+        }
+        prev = start[i];
+    }
+
     if (myRank == 0) {
         // Main process
         for (source = 1; source < numProcesses; source++){
@@ -30,7 +43,7 @@ int main(int argc, char** argv) {
             printf("%s\n",message);
         }
     } else {
-        sprintf(message, "Greetings from process %d!", myRank);
+        sprintf(message, "My starting number is %d!", start[myRank]);
         dest = 0;
         MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
     }
