@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
             printf("%s\n",message);
         }
     } else {
-        sprintf(message, "My starting number is %d!", start[myRank]);
+        sprintf(message, "My starting number is %d!", prev);
         dest = 0;
         MPI_Send(message, strlen(message)+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
     }
