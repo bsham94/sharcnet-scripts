@@ -22,7 +22,7 @@ int calculateRange(int rank, int n, int processors) {
 
 int main(int argc, char** argv)
 {
-    int n = 1000000000;
+    int n = 63;
     int my_rank;        //Rank of process
     int processors;     //Number of process
     //int source;
@@ -41,32 +41,14 @@ int main(int argc, char** argv)
     else
     {
         // Calculate start
-        int number = 0;
-        if ((my_rank - 1) < (n % (processors - 1)))
-        {
-            number = my_rank - 1;
-        }
-        else
-        {
-            number = n % (processors - 1);
-        }
         unsigned long int start = calculateRange(my_rank - 1, n, processors - 1);
-        //unsigned long int start = ((my_rank - 1) * result) + number;
+
         // Calculate end
-        if ((my_rank) < (n % (processors - 1)))
-        {
-            number = my_rank;
-        }
-        else
-        {
-            number = n % (processors - 1);
-        }
         unsigned long int end = calculateRange(my_rank, n, processors - 1) - 1;
         if (my_rank == (processors - 1)) {
             // Final processor
             end++;
         }
-        //unsigned long int end = ((my_rank * result) + number) - 1;
         printf("rank: %d, start: %lu, end: %lu\n", my_rank, start, end);
     }
 
