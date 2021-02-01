@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
 
     // Get range
-    unsigned int start[numProcesses];
+    unsigned int start[8];
     unsigned int prev = 0;
     for(int i = 1; i < max; i++){
         start[i] = prev + (max / numProcesses);
