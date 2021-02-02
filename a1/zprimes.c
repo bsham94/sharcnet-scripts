@@ -3,29 +3,34 @@
 #include <gmp.h>
 #include <mpi.h>
 
-int calculateRange(int rank, int n, int processors) {
-    int result = (n / processors);
+int calculateRange(int rank, int n, int p) {
+    /* Essentially, pigeonhole principal
+     * n => pigeons
+     * p => pigeonholes
+    */
+    int result = (n / p);
     int number = 0;
-    if (rank < (n % processors))
+    // min(rank, mod(n,p)) is added to range
+    if (rank < (n % p))
     {
         number = rank;
     }
     else
     {
-        number = n % processors;
+        number = n % p;
     }
     return (rank * result) + number;
 }
 
 int main(int argc, char** argv)
 {
-    unsigned long int n = 1000000000000;
-    int my_rank;        //Rank of process
-    int processors;     //Number of process
-    //int source;
-    int tag = 0;
-    int dest = 0;
-    MPI_Status status;
+    unsigned long int n = 1000;    // Number to count to
+    int my_rank;        // Rank of process
+    int processors;     // Number of process
+    int tag = 0;        // Message tag
+    int dest = 0;       // Destination to send (all send to rank=0)
+    MPI_Status status;  // Status
+
     //Start mpi
     MPI_Init(&argc, &argv);
     //Find process rank
@@ -35,11 +40,13 @@ int main(int argc, char** argv)
 
     if (my_rank == 0)
     {
+        // Wait for responses from all processors
         unsigned long int first, second, gap, largestFirst, largestSecond, largestGap = 0;
         for(int source = 1; source < processors; source++){
             MPI_Recv(&first, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
             MPI_Recv(&second, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
             MPI_Recv(&gap, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
+            // Check if this response was the biggest one
             if(gap > largestGap){
                 largestFirst = first;
                 largestSecond = second;
@@ -56,11 +63,11 @@ int main(int argc, char** argv)
         // Calculate end
         unsigned long int end = calculateRange(my_rank, n, processors - 1) - 1;
         if (my_rank == (processors - 1)) {
-            // Final processor
+            // Final processor reaches to the end
             end++;
         }
-        //printf("rank: %d, start: %lu, end: %lu\n", my_rank, start, end);
 
+        // Initialize all the mpz_ts
         mpz_t first, second, gap, largestFirst, largestSecond, largestGap, max;
         mpz_init_set_ui(first, start);
         mpz_init_set_ui(max, end);
@@ -70,29 +77,32 @@ int main(int argc, char** argv)
         mpz_init(largestFirst);
         mpz_init(largestSecond);
 
+        // Determine if we're starting with a prime
         mpz_nextprime(second, first);
         if(mpz_probab_prime_p(first, 30) == 2) {
             mpz_sub(gap, second, first);
         }
+
+        // Loop until we reach the max, checking for the largest prime gap
         while(mpz_cmp(max, second) > 0){
             mpz_set(first, second);
             mpz_nextprime(second, first);
             mpz_sub(gap, second, first);
             if(mpz_cmp(gap, largestGap) > 0){
+                // Store the largest primes and their gap
                 mpz_set(largestFirst, first);
                 mpz_set(largestSecond, second);
                 mpz_set(largestGap, gap);
             }
         }
 
+        // Send all three to rank=0
         unsigned long resultFirst = mpz_get_ui(largestFirst);
         MPI_Send(&resultFirst, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
         unsigned long resultSecond = mpz_get_ui(largestSecond);
         MPI_Send(&resultSecond, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
         unsigned long resultGap = mpz_get_ui(largestGap);
         MPI_Send(&resultGap, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
-        //printf("Rank: %d,", my_rank);
-        //gmp_printf(" prime1 %Zd, prime2 %Zd, largest gap: %Zd\n", largestFirst, largestSecond, largestGap);
     }
 
     MPI_Finalize();
