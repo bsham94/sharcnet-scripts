@@ -24,7 +24,7 @@ int calculateRange(int rank, int n, int p) {
 
 int main(int argc, char** argv)
 {
-    unsigned long int n = 1000;    // Number to count to
+    unsigned long int n = 1000000000;    // Number to count to
     int my_rank;        // Rank of process
     int processors;     // Number of process
     int tag = 0;        // Message tag
@@ -40,6 +40,10 @@ int main(int argc, char** argv)
 
     if (my_rank == 0)
     {
+        // Get starting time
+        double startTime = MPI_Wtime();
+
+
         // Wait for responses from all processors
         unsigned long int first, second, gap, largestFirst, largestSecond, largestGap = 0;
         for(int source = 1; source < processors; source++){
@@ -54,6 +58,8 @@ int main(int argc, char** argv)
             }
         }
         printf("The largest gap is between %lu and %lu and it is %lu\n", largestFirst, largestSecond, largestGap);
+        double endTime = (MPI_Wtime() - startTime);
+        printf("%.2lf (seconds)\n", endTime);
     }
     else
     {
