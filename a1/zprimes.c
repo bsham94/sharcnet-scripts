@@ -22,11 +22,12 @@ int calculateRange(int rank, int n, int processors) {
 
 int main(int argc, char** argv)
 {
-    int n = 1000;
+    int n = 10000;
     int my_rank;        //Rank of process
     int processors;     //Number of process
     //int source;
     int tag = 0;
+    int dest = 0;
     MPI_Status status;
     //Start mpi
     MPI_Init(&argc, &argv);
@@ -37,6 +38,18 @@ int main(int argc, char** argv)
 
     if (my_rank == 0)
     {
+        unsigned long int first, second, gap, largestFirst, largestSecond, largestGap = 0;
+        for(int source = 1; source < processors; source++){
+            MPI_Recv(&first, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&second, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&gap, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
+            if(gap > largestGap){
+                largestFirst = first;
+                largestSecond = second;
+                largestGap = gap;
+            }
+        }
+        printf("The largest gap is between %lu and %lu and it is %lu\n", largestFirst, largestSecond, largestGap);
     }
     else
     {
@@ -74,9 +87,15 @@ int main(int argc, char** argv)
                 mpz_set(largestGap, gap);
             }
         }
-        printf("Rank: %d,", my_rank);
-        gmp_printf(" prime1 %Zd, prime2 %Zd, largest gap: %Zd\n", largestFirst, largestSecond, largestGap);
-        
+
+        unsigned long resultFirst = mpz_get_ui(largestFirst);
+        MPI_Send(&resultFirst, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
+        unsigned long resultSecond = mpz_get_ui(largestSecond);
+        MPI_Send(&resultSecond, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
+        unsigned long resultGap = mpz_get_ui(largestGap);
+        MPI_Send(&resultGap, 1, MPI_UNSIGNED_LONG, dest, tag, MPI_COMM_WORLD);
+        //printf("Rank: %d,", my_rank);
+        //gmp_printf(" prime1 %Zd, prime2 %Zd, largest gap: %Zd\n", largestFirst, largestSecond, largestGap);
     }
 
     MPI_Finalize();
