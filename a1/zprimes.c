@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-//#include <gmp.h>
+#include <gmp.h>
 #include <mpi.h>
 #include <math.h>
 #include <string.h>
@@ -22,7 +22,7 @@ int calculateRange(int rank, int n, int processors) {
 
 int main(int argc, char** argv)
 {
-    int n = 63;
+    int n = 1000;
     int my_rank;        //Rank of process
     int processors;     //Number of process
     //int source;
@@ -49,7 +49,34 @@ int main(int argc, char** argv)
             // Final processor
             end++;
         }
-        printf("rank: %d, start: %lu, end: %lu\n", my_rank, start, end);
+        //printf("rank: %d, start: %lu, end: %lu\n", my_rank, start, end);
+
+        mpz_t first, second, gap, largestFirst, largestSecond, largestGap, max;
+        mpz_init_set_ui(first, start);
+        mpz_init_set_ui(max, end);
+        mpz_init(second);
+        mpz_init(gap);
+        mpz_init_set_ui(largestGap, 0);
+        mpz_init(largestFirst);
+        mpz_init(largestSecond);
+
+        mpz_nextprime(second, first);
+        if(mpz_probab_prime_p(first, 30) == 2) {
+            mpz_sub(gap, second, first);
+        }
+        while(mpz_cmp(max, second) > 0){
+            mpz_set(first, second);
+            mpz_nextprime(second, first);
+            mpz_sub(gap, second, first);
+            if(mpz_cmp(gap, largestGap) > 0){
+                mpz_set(largestFirst, first);
+                mpz_set(largestSecond, second);
+                mpz_set(largestGap, gap);
+            }
+        }
+        printf("Rank: %d,", my_rank);
+        gmp_printf(" prime1 %Zd, prime2 %Zd, largest gap: %Zd\n", largestFirst, largestSecond, largestGap);
+        
     }
 
     MPI_Finalize();
