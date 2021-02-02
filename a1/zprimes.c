@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <mpi.h>
-#include <math.h>
-#include <string.h>
-#pragma warning(disable:4996)
 
 int calculateRange(int rank, int n, int processors) {
     int result = (n / processors);
@@ -22,7 +19,7 @@ int calculateRange(int rank, int n, int processors) {
 
 int main(int argc, char** argv)
 {
-    int n = 1000000000;
+    unsigned long int n = 1000000000000;
     int my_rank;        //Rank of process
     int processors;     //Number of process
     //int source;
