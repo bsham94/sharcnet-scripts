@@ -22,7 +22,7 @@ int calculateRange(int rank, int n, int processors) {
 
 int main(int argc, char** argv)
 {
-    int n = 10000;
+    int n = 1000000000;
     int my_rank;        //Rank of process
     int processors;     //Number of process
     //int source;
