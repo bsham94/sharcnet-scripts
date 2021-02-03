@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         }
         printf("The largest gap is between %lu and %lu and it is %lu\n", largestFirst, largestSecond, largestGap);
         double endTime = (MPI_Wtime() - startTime);
-        printf("%.2lf (seconds)\n", endTime);
+        printf("Completed in %.2lf seconds on %d processors.\n", endTime, processors - 1);
     }
     else
     {
