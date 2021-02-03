@@ -82,7 +82,8 @@ int main(int argc, char** argv)
         mpz_init(second);
         mpz_init(gap);
         //mpz_init_set_ui(largestGap, 0);
-        mpz_import(largestGap, 1, -1, sizeof(unsigned long long), 0, 0, &0);
+        unsigned long long currentGap = 0;
+        mpz_import(largestGap, 1, -1, sizeof(unsigned long long), 0, 0, &currentGap);
         mpz_init(largestFirst);
         mpz_init(largestSecond);
 
