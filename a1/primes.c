@@ -65,7 +65,7 @@ int main(int argc, char** argv)
      * 18,446,744,073,709,551,615
      * which is plenty (more than enough).
     */
-    unsigned long long n = 1000000000;    // Number to count to
+    unsigned long long n = 1000000000000;    // Number to count to
     int my_rank;        // Rank of process
     int processors;     // Number of process
     int tag = 0;        // Message tag
