@@ -57,7 +57,7 @@ int main(int argc, char** argv)
                 largestGap = gap;
             }
         }
-        printf("The largest gap is between %lu and %lu and it is %lu\n", largestFirst, largestSecond, largestGap);
+        printf("The largest gap is between %llu and %llu and it is %llu\n", largestFirst, largestSecond, largestGap);
         double endTime = (MPI_Wtime() - startTime);
         printf("Completed in %.2lf seconds on %d processors.\n", endTime, processors - 1);
     }
@@ -76,14 +76,21 @@ int main(int argc, char** argv)
         // Initialize all the mpz_ts
         mpz_t first, second, gap, largestFirst, largestSecond, largestGap, max;
         //mpz_init_set_ui(first, start);
-        mpz_import(first, 1, -1, sizeof(unsigned long long), 0, 0, &start);
+        mpz_init(first);
+        mpz_import(first, 1, -1, sizeof start, 0, 0, &start);
+
         //mpz_init_set_ui(max, end);
-        mpz_import(max, 1, -1, sizeof(unsigned long long), 0, 0, &end);
+        mpz_init(max);
+        mpz_import(max, 1, -1, sizeof end, 0, 0, &end);
+
         mpz_init(second);
         mpz_init(gap);
+
         //mpz_init_set_ui(largestGap, 0);
         unsigned long long currentGap = 0;
-        mpz_import(largestGap, 1, -1, sizeof(unsigned long long), 0, 0, &currentGap);
+        mpz_init(largestGap);
+        mpz_import(largestGap, 1, -1, sizeof currentGap, 0, 0, &currentGap);
+
         mpz_init(largestFirst);
         mpz_init(largestSecond);
 
