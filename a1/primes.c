@@ -3,7 +3,7 @@
 #include <gmp.h>
 #include <mpi.h>
 
-unsigned long long calculateRange(int rank, int n, int p) {
+unsigned long long calculateRange(int rank, unsigned long long n, int p) {
     /* Essentially, pigeonhole principal
      * n => pigeons
      * p => pigeonholes
@@ -24,7 +24,7 @@ unsigned long long calculateRange(int rank, int n, int p) {
 
 int main(int argc, char** argv)
 {
-    unsigned long int n = 1000000000000;    // Number to count to
+    unsigned long long n = 1000000000000;    // Number to count to
     int my_rank;        // Rank of process
     int processors;     // Number of process
     int tag = 0;        // Message tag
