@@ -4,9 +4,16 @@
 #include <mpi.h>
 
 unsigned long long calculateRange(int rank, unsigned long long n, int p) {
-    /* Essentially, pigeonhole principal
+    /* 
+     * Gets the data parallelism range.
+     * ==> istart,p=p[n/P]+min(p,mod(n,P))
+     * 
+     * Essentially, pigeonhole principal
      * n => pigeons
      * p => pigeonholes
+     * 
+     * The large number 'n' is divided up so that each processor gets a section of
+     * the number to search for primes within.
     */
     int result = (n / p);
     int number = 0;
@@ -24,8 +31,11 @@ unsigned long long calculateRange(int rank, unsigned long long n, int p) {
 
 
 unsigned long long mpz_get_ull(mpz_t op){
-    // Referenced from https://stackoverflow.com/a/6248913
-    // Since gmplib lacks proper mpz_get_ull function
+    /* 
+     * Referenced from https://stackoverflow.com/a/6248913
+     * Since gmplib lacks proper mpz_get_ull function
+     * This will convert an unsigned long long to an mpz_t
+     */
     unsigned long long rop = 0;
     mpz_export( // Converts a word of binary data to an mpz_t
         &rop,   // (Rop) ull to return
@@ -40,8 +50,11 @@ unsigned long long mpz_get_ull(mpz_t op){
 }
 
 void mpz_init_set_ull(mpz_t rop, unsigned long long op){
-    // Referenced from https://stackoverflow.com/a/6248913
-    // Since gmplib lacks proper mpz_init_set_ull function
+    /*
+     * Referenced from https://stackoverflow.com/a/6248913
+     * Since gmplib lacks proper mpz_init_set_ull function
+     * This will convert an mpz_t to an unsigned long long
+     */
     mpz_init(rop);
     mpz_import(
         rop,    // (Rop) mpz_t to return
@@ -66,26 +79,30 @@ int main(int argc, char** argv)
      * which is plenty (more than enough).
     */
     unsigned long long n = 1000000000000;    // Number to count to
-    int my_rank;        // Rank of process
+    int myRank;        // Rank of process
     int processors;     // Number of process
     int tag = 0;        // Message tag
-    int dest = 0;       // Destination to send (all send to rank=0)
+    int masterProc = 0;       // Destination to send (all send to rank=0)
     MPI_Status status;  // Status
 
     //Start mpi
     MPI_Init(&argc, &argv);
     //Find process rank
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     //Find out number of processes
     MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
-    if (my_rank == 0)   // The master process
+    if (myRank == masterProc)   // The master process
     {
         // Get starting time
         double startTime = MPI_Wtime();
 
-
-        // Wait for responses from all processors
+        /*
+         * Wait for responses from all processors.
+         * The processors will each return their largest prime gap they found.
+         * This master process will determine which was the largest found and
+         * output the result
+         */
         unsigned long long first, second, gap, largestFirst, largestSecond, largestGap = 0;
         for(int source = 1; source < processors; source++){
             // Get 3 messages from each processor
@@ -102,19 +119,26 @@ int main(int argc, char** argv)
             }
         }
 
-        // Output the results
-        printf("The largest gap is between %llu and %llu and it is %llu.\n", largestFirst, largestSecond, largestGap);
+        // Stop & calculate the running time
+        // For parallel benchmarking
         double endTime = (MPI_Wtime() - startTime);
+
+        /* 
+         * Output the results
+         * We output processors - 1 because processor rank=0 didn't help in the calculation
+         * Eg. If we want to test 8 processors, we use ntasks=9 because one of them will sit and wait for messages
+         */
+        printf("The largest gap is between %llu and %llu and it is %llu.\n", largestFirst, largestSecond, largestGap);
         printf("Completed in %.2lf seconds on %d processors.\n", endTime, processors - 1);
     }
     else // Child process
     {
         // Calculate start
-        unsigned long long start = calculateRange(my_rank - 1, n, processors - 1);
+        unsigned long long start = calculateRange(myRank - 1, n, processors - 1);
 
         // Calculate end
-        unsigned long long end = calculateRange(my_rank, n, processors - 1) - 1;
-        if (my_rank == (processors - 1)) {
+        unsigned long long end = calculateRange(myRank, n, processors - 1) - 1;
+        if (myRank == (processors - 1)) {
             // Final processor reaches to the end
             end++;
         }
@@ -125,7 +149,7 @@ int main(int argc, char** argv)
         mpz_init_set_ull(max, end);
         mpz_init(second);
         mpz_init(gap);
-        mpz_init_set_ull(largestGap, 0);
+        mpz_init_set_ull(largestGap, 0); // Set to 0 because we'll be comparing it later
         mpz_init(largestFirst);
         mpz_init(largestSecond);
 
@@ -150,13 +174,13 @@ int main(int argc, char** argv)
 
         // Send all three to rank=0
        unsigned long long resultFirst = mpz_get_ull(largestFirst);
-       MPI_Send(&resultFirst, 1, MPI_UNSIGNED_LONG_LONG, dest, tag, MPI_COMM_WORLD);
+       MPI_Send(&resultFirst, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
        unsigned long long resultSecond = mpz_get_ull(largestSecond);
        mpz_export(&resultSecond, 0, -1, sizeof(unsigned long long), 0, 0, largestSecond);
-       MPI_Send(&resultSecond, 1, MPI_UNSIGNED_LONG_LONG, dest, tag, MPI_COMM_WORLD);
+       MPI_Send(&resultSecond, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
        unsigned long long resultGap = mpz_get_ull(largestGap);
        mpz_export(&resultGap, 0, -1, sizeof(unsigned long long), 0, 0, largestGap);
-       MPI_Send(&resultGap, 1, MPI_UNSIGNED_LONG_LONG, dest, tag, MPI_COMM_WORLD);
+       MPI_Send(&resultGap, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
     }
 
     MPI_Finalize();
