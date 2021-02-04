@@ -89,9 +89,9 @@ int main(int argc, char** argv)
         unsigned long long first, second, gap, largestFirst, largestSecond, largestGap = 0;
         for(int source = 1; source < processors; source++){
             // Get 3 messages from each processor
-            MPI_Recv(&first, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
-            MPI_Recv(&second, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
-            MPI_Recv(&gap, 1, MPI_UNSIGNED_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&first, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&second, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&gap, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
 
             // Check if this response was the biggest one
             if(gap > largestGap){
