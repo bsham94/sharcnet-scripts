@@ -15,7 +15,7 @@ unsigned long long calculateRange(int rank, unsigned long long n, int p) {
      * The large number 'n' is divided up so that each processor gets a section of
      * the number to search for primes within.
     */
-    int result = (n / p);
+    unsigned long long result = (n / p);
     int number = 0;
     // min(rank, mod(n,p)) is added to range
     if (rank < (n % p))
