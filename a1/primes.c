@@ -80,7 +80,7 @@ int main(int argc, char **argv)
      * 18,446,744,073,709,551,615
      * which is plenty (more than enough).
     */
-    unsigned long long n = 1000000000000; // Number to count to
+    unsigned long long n = 1000000000; // Number to count to
     int myRank;                           // Rank of process
     int processors;                       // Number of process
     int tag = 0;                          // Message tag
@@ -140,8 +140,17 @@ int main(int argc, char **argv)
         }
     }
 
+    // Export back to unsigned long long
+    unsigned long long resultFirst = mpz_get_ull(largestFirst);
+    unsigned long long resultSecond = mpz_get_ull(largestSecond);
+    unsigned long long resultGap = mpz_get_ull(largestGap);
+
     if (myRank == masterProc) // The master process
     {
+        // Master process has largest for now
+        unsigned long long largestFirst = resultFirst;
+        unsigned long long largestSecond = resultSecond;
+        unsigned long long largestGap = resultGap;
 
         /*
          * Wait for responses from all processors.
@@ -149,21 +158,20 @@ int main(int argc, char **argv)
          * This master process will determine which was the largest found and
          * output the result
          */
-        unsigned long long first, second, gap, largestFirst, largestSecond, largestGap = 0;
         for (int source = 1; source < processors; source++)
         {
             // Get 3 messages from each processor
-            MPI_Recv(&first, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
-            MPI_Recv(&second, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
-            MPI_Recv(&gap, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&resultFirst, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&resultSecond, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(&resultGap, 1, MPI_UNSIGNED_LONG_LONG, source, tag, MPI_COMM_WORLD, &status);
 
             // Check if this response was the biggest one
-            if (gap > largestGap)
+            if (resultGap > largestGap)
             {
                 // If so, store it
-                largestFirst = first;
-                largestSecond = second;
-                largestGap = gap;
+                largestFirst = resultFirst;
+                largestSecond = resultSecond;
+                largestGap = resultGap;
             }
         }
 
@@ -183,12 +191,9 @@ int main(int argc, char **argv)
     else // Slave process
     {
         // Send all three to rank=0
-        unsigned long long resultFirst = mpz_get_ull(largestFirst);
         MPI_Send(&resultFirst, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
-        unsigned long long resultSecond = mpz_get_ull(largestSecond);
         mpz_export(&resultSecond, 0, -1, sizeof(unsigned long long), 0, 0, largestSecond);
         MPI_Send(&resultSecond, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
-        unsigned long long resultGap = mpz_get_ull(largestGap);
         mpz_export(&resultGap, 0, -1, sizeof(unsigned long long), 0, 0, largestGap);
         MPI_Send(&resultGap, 1, MPI_UNSIGNED_LONG_LONG, masterProc, tag, MPI_COMM_WORLD);
     }
