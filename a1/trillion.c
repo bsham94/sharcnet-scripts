@@ -80,7 +80,7 @@ int main(int argc, char **argv)
      * 18,446,744,073,709,551,615
      * which is plenty (more than enough).
     */
-    unsigned long long n = 1000000000; // Number to count to
+    unsigned long long n = 1000000000000; // Number to count to
     int myRank;                           // Rank of process
     int processors;                       // Number of process
     int tag = 0;                          // Message tag
@@ -107,7 +107,6 @@ int main(int argc, char **argv)
         // Final processor reaches to the end
         end++;
     }
-    printf("Rank: %d, Start: %llu, End: %llu\n", myRank, start, end);
 
     // Initialize all the mpz_ts
     mpz_t first, second, gap, largestFirst, largestSecond, largestGap, max;
