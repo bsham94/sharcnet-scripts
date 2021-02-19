@@ -159,7 +159,7 @@ int main(int argc, char **argv)
                 printf("%d ", aNew[i]);
             }
             printf("]\n");
-            printf("bstart: %d, bend: %d\n", bStart,)
+            printf("bstart: %d, bend: %d\n", bStart, bEnd);
             printf("last b: [ ");
             for(int i = 0; i < sizeB; i++)
             {
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
             }
             printf("]\n");
         }
-        return 1;
+        
         // Merge a and b
         int i = 0;
         int j = 0;
