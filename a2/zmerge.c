@@ -148,6 +148,7 @@ int main(int argc, char **argv)
                 printf("%d ", merge[i]);
             }
             printf("]\n");
+            free(merge);
         }
         else // Slave processes
         {
