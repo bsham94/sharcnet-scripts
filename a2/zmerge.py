@@ -21,9 +21,8 @@ tag = 0
 master = 0
 #a = [1,5,15,18,19,21,23,24,27,29,30,31,32,37,42,49]
 #b = [2,3,4,13,15,19,20,22,28,29,38,41,42,43,48,49]
-a = [0, 1, 2, 4, 4, 5, 6, 9, 12, 14, 16, 18, 21, 21, 21, 22]
-b = [3, 6, 6, 8, 8, 11, 11, 12, 15, 15, 15, 16, 16, 16, 19, 22]
-'''
+#a = [0, 1, 2, 4, 4, 5, 6, 9, 12, 14, 16, 18, 21, 21, 21, 22]
+#b = [3, 6, 6, 8, 8, 11, 11, 12, 15, 15, 15, 16, 16, 16, 19, 22]
 a = []
 b = []
 if my_rank == 0:
@@ -41,12 +40,12 @@ if my_rank == 0:
 else:
     a = comm.recv(source=master, tag=tag)
     b = comm.recv(source=master, tag=tag)
-'''
+
 k = int(math.log(n, 2))
 a_start = (my_rank) * k
 a_end = (my_rank) * k + (k-1)
 b_start = 0
-b_end = binary_search(b, 0, len(b) - 1, a[a_end]) - 1
+b_end = binary_search(b, 0, len(b) - 1, a[a_end])
 
 if my_rank == 0:
     comm.send(b_end, dest=(my_rank+1), tag=tag)
@@ -54,11 +53,11 @@ elif my_rank == size - 1:
     b_start = comm.recv( source=(my_rank-1), tag=tag)
     b_end = n
 else:
-    b_start = comm.recv(source=(my_rank-1), tag=tag) + 1
+    b_start = comm.recv(source=(my_rank-1), tag=tag)
     comm.send(b_end, dest=(my_rank+1), tag=tag)
 
-print("rank " + str(my_rank) + ", a_start " + str(a_start) + ", a_end " + str(a_end) + ", b_star t " + str(b_start) + ", b_end " + str(b_end))
-
+#print("rank " + str(my_rank) + ", a_start " + str(a_start) + ", a_end " + str(a_end) + ", b_start " + str(b_start) + ", b_end " + str(b_end))
+b_end = b_end - 1
 a_size = k
 b_size = (b_end - b_start) + 1
 c_size = a_size + b_size
@@ -80,12 +79,12 @@ for k in range(c_size):
     else:
         c.append(b_new[j])
         j = j + 1
-
+'''
 if my_rank == size - 1:
     print(a_new)
     print(b_new)
     print(c)
-
+'''
 if my_rank == 0:
     print(a)
     print(b)
@@ -96,5 +95,6 @@ if my_rank == 0:
         #print(c)
         merge.extend(c)
     print(merge)
+    print(len(merge))
 else:
     comm.send(c, dest=master, tag=tag)
