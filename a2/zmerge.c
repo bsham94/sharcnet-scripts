@@ -71,14 +71,18 @@ int main(int argc, char **argv)
             printf("a: [ ");
             for(int i = 0; i < n; i++)
             {
-                a[i] = i;
+                a[i] = rand() % 3;
+                if (i > 0)
+                    a[i] += a[i-1];
                 printf("%d ", a[i]);
             }
             printf("]\n");
             printf("b: [ ");
             for(int i = 0; i < n; i++)
             {
-                b[i] = i;
+                b[i] = rand() % 3;
+                if (i > 0)
+                    b[i] += b[i-1];
                 printf("%d ", b[i]);
             }
             printf("]\n");
@@ -148,6 +152,22 @@ int main(int argc, char **argv)
             bNew[i] = b[bStart + i];
         }
 
+        if(myRank == processors - 1){
+            printf("last a: [ ");
+            for(int i = 0; i < sizeA; i++)
+            {
+                printf("%d ", aNew[i]);
+            }
+            printf("]\n");
+            printf("bstart: %d, bend: %d\n", bStart,)
+            printf("last b: [ ");
+            for(int i = 0; i < sizeB; i++)
+            {
+                printf("%d ", bNew[i]);
+            }
+            printf("]\n");
+        }
+        return 1;
         // Merge a and b
         int i = 0;
         int j = 0;
