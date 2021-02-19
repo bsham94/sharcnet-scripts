@@ -68,15 +68,20 @@ int main(int argc, char **argv)
         {
             // Create 2 pseudorandom arrays
             srand(time(NULL));
+            printf("a: [ ");
             for(int i = 0; i < n; i++)
             {
-                a[i] = (i * 10) + (rand() % 10);
-                //printf("%d\n", a[i]);
+                a[i] = i;
+                printf("%d ", a[i]);
             }
+            printf("]\n");
+            printf("b: [ ");
             for(int i = 0; i < n; i++)
             {
-                b[i] = (i * 10) + (rand() % 10);
+                b[i] = i;
+                printf("%d ", b[i]);
             }
+            printf("]\n");
             for (int source = 1; source < processors; source++)
             {
                 MPI_Send(a, n, MPI_INT, source, tag, MPI_COMM_WORLD);
@@ -109,6 +114,7 @@ int main(int argc, char **argv)
         {
             // Final process only recieves
             MPI_Recv(&bStart, 1, MPI_INT, myRank - 1, tag, MPI_COMM_WORLD, &status);
+            bEnd++;
         }
         else// Slave process
         {
@@ -121,7 +127,6 @@ int main(int argc, char **argv)
         int sizeA = k;
         int sizeB = (bEnd - bStart);
         int sizeC = sizeA + sizeB;
-        printf("bStart %d, bEnd %d, sizeC %d\n", bStart, bEnd, sizeC);
         // Dynamically create array c
         int *c = malloc(sizeof(int)* sizeC);
 
@@ -163,30 +168,40 @@ int main(int argc, char **argv)
                 j++;
             }
         }
+
         if (myRank == masterProc){ // The master process
             // Merge array will store all our combined arrays.
-            int *merge = malloc(sizeof(int)* (sizeA + sizeB));
-            
-            // Wait for c arrays from each processes
-            for (int source = 0; source < processors; source++)
+            int *merge = malloc(sizeof(int)* (n*2) + 1);
+            int mergeLoc = 0;
+
+            for(int i = 0; i < sizeC; i++)
             {
-                if(source > 0)
-                { 
-                    // Receive from slave processes
-                    MPI_Recv(&sizeC, 1, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
-                    c = malloc(sizeof(int)* sizeC);
-                    MPI_Recv(c, sizeC, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
-                }
+                // Add to merge array
+                merge[mergeLoc] = c[i];
+                mergeLoc++;
+            }
+
+            // Wait for c arrays from each processes
+            for (int source = 1; source < processors; source++)
+            {
+                // Receive from slave processes
+                //MPI_Recv(&sizeC, 1, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
+                MPI_Probe(source, tag, MPI_COMM_WORLD, &status);
+                MPI_Get_count(&status, MPI_INT, &sizeC);
+                //int *cNew = malloc(sizeof(int)* sizeC);
+                c = realloc(c, sizeof(int) * sizeC);
+                MPI_Recv(c, sizeC, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
                 for(int i = 0; i < sizeC; i++)
                 {
                     // Add to merge array
-                    merge[(source*sizeC) + i] = c[i];
+                    merge[mergeLoc] = c[i];
+                    mergeLoc++;
                 }
             }
 
             // Output
-            printf("[ ");
-            for (int i = 0; i < (sizeC * k); i++){
+            printf("merge: [ ");
+            for (int i = 0; i < mergeLoc; i++){
                 printf("%d ", merge[i]);
             }
             printf("]\n");
@@ -196,7 +211,7 @@ int main(int argc, char **argv)
         else // Slave processes
         {
             // Send c array to master process to merge
-            MPI_Send(&sizeC, 1, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
+            //MPI_Send(&sizeC, 1, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
             MPI_Send(c, sizeC, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
         }
 
