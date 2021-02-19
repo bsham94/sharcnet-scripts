@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <math.h>
 #include <limits.h>
+#include <time.h>
 
 int calculateRange(int rank, int n, int k, int r)
 {
@@ -44,8 +45,8 @@ int binarySearch(int arr[], int l, int r, int x)
 int main(int argc, char **argv)
 {
     int n = 16;
-    int a[16] = {1,5,15,18,19,21,23,24,27,29,30,31,32,37,42,49};
-    int b[16] = {2,3,4,13,15,19,20,22,28,29,38,41,42,43,48,49};
+    //int a[16] = {1,5,15,18,19,21,23,24,27,29,30,31,32,37,42,49};
+    //int b[16] = {2,3,4,13,15,19,20,22,28,29,38,41,42,43,48,49};
     int myRank;                           // Rank of process
     int processors;                       // Number of process
     int tag = 0;                          // Message tag
@@ -61,6 +62,34 @@ int main(int argc, char **argv)
     int k = log2(n);
     int r = n/k;
     if (r <= processors) { // Check if we have enough processors
+        int *a = (int*) malloc(sizeof(int)* n);
+        int *b = (int*) malloc(sizeof(int)* n);
+        if(myRank == masterProc)
+        {
+            // Create 2 pseudorandom arrays
+            srand(time(NULL));
+            for(int i = 0; i < n; i++)
+            {
+                a[i] = (i * 10) + (rand() % 10);
+                //printf("%d\n", a[i]);
+            }
+            for(int i = 0; i < n; i++)
+            {
+                b[i] = (i * 10) + (rand() % 10);
+            }
+            for (int source = 1; source < processors; source++)
+            {
+                MPI_Send(a, n, MPI_INT, source, tag, MPI_COMM_WORLD);
+                MPI_Send(b, n, MPI_INT, source, tag, MPI_COMM_WORLD);
+            }
+        }
+        else
+        {
+            // Wait for arrays from master process
+            MPI_Recv(a, n, MPI_INT, masterProc, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(b, n, MPI_INT, masterProc, tag, MPI_COMM_WORLD, &status);
+        }
+
         // Divide up array a for each process
         int aStart = calculateRange(myRank, n, k, r);
         int aEnd = calculateRange(myRank + 1, n, k, r) - 1;
@@ -92,6 +121,7 @@ int main(int argc, char **argv)
         int sizeA = k;
         int sizeB = (bEnd - bStart);
         int sizeC = sizeA + sizeB;
+        printf("bStart %d, bEnd %d, sizeC %d\n", bStart, bEnd, sizeC);
         // Dynamically create array c
         int *c = malloc(sizeof(int)* sizeC);
 
@@ -133,14 +163,9 @@ int main(int argc, char **argv)
                 j++;
             }
         }
-
         if (myRank == masterProc){ // The master process
-            /* 
-             * Merge array will store all our combined arrays.
-             * It's size is (the size of c) * (k amount of processors),
-             * since each k processor created a c array.
-             */
-            int *merge = malloc(sizeof(int)* (sizeC * k));
+            // Merge array will store all our combined arrays.
+            int *merge = malloc(sizeof(int)* (sizeA + sizeB));
             
             // Wait for c arrays from each processes
             for (int source = 0; source < processors; source++)
@@ -148,6 +173,8 @@ int main(int argc, char **argv)
                 if(source > 0)
                 { 
                     // Receive from slave processes
+                    MPI_Recv(&sizeC, 1, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
+                    c = malloc(sizeof(int)* sizeC);
                     MPI_Recv(c, sizeC, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
                 }
                 for(int i = 0; i < sizeC; i++)
@@ -169,6 +196,7 @@ int main(int argc, char **argv)
         else // Slave processes
         {
             // Send c array to master process to merge
+            MPI_Send(&sizeC, 1, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
             MPI_Send(c, sizeC, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
         }
 
