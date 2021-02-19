@@ -61,41 +61,51 @@ int main(int argc, char **argv)
     int k = log2(n);
     int r = n/k;
     if (r <= processors) { // Check if we have enough processors
+        // Divide up array a for each process
         int aStart = calculateRange(myRank, n, k, r);
         int aEnd = calculateRange(myRank + 1, n, k, r) - 1;
 
+        // Assume b starts at 0 until we recieve a message otherwise
         int bStart = 0;
+        // Get the b array's end via binary search
         int bEnd = binarySearch(b, 0, n, a[aEnd]);
 
-        // Send and receive 
+        // Send and receive b array start and end values
         if (myRank == masterProc) // The master process
         {
+            // Master only sends
             MPI_Send(&bEnd, 1, MPI_INT, myRank + 1, tag, MPI_COMM_WORLD);
         }
         else if (myRank == processors - 1) // Last process
         {
+            // Final process only recieves
             MPI_Recv(&bStart, 1, MPI_INT, myRank - 1, tag, MPI_COMM_WORLD, &status);
         }
         else// Slave process
         {
+            // All other processes send and recieve
             MPI_Send(&bEnd, 1, MPI_INT, myRank + 1, tag, MPI_COMM_WORLD);
             MPI_Recv(&bStart, 1, MPI_INT, myRank - 1, tag, MPI_COMM_WORLD, &status);
         }
 
-        //printf("rank:%d, min: %d, max: %d, diff: %d\n", myRank, bStart, bEnd, (bEnd - bStart));
-
+        // Calculate the size that array c should be
         int sizeA = k;
         int sizeB = (bEnd - bStart);
         int sizeC = sizeA + sizeB;
+        // Dynamically create array c
         int *c = malloc(sizeof(int)* sizeC);
 
+        /*
+         * Append INT_MAX to the end of a and b.
+         * This will help us later when sorting the smallest values.
+         * It prevents us from going out of bounds.
+         */
         int *aNew = malloc(sizeof(int) * (k));
         aNew[k] = INT_MAX;
         for(int i = aStart; i <= aEnd; i++)
         {
             aNew[i - aStart] = a[i];
         }
-
         int *bNew = malloc(sizeof(int) * (sizeB + 1));
         bNew[sizeB] = INT_MAX;
         for(int i = 0; i < sizeB; i++)
@@ -103,15 +113,21 @@ int main(int argc, char **argv)
             bNew[i] = b[bStart + i];
         }
 
+        // Merge a and b
         int i = 0;
         int j = 0;
         for(int k = 0; k < sizeC; k++)
         {
+            /* 
+             * If a is smaller, append it to c and iterate.
+             * Since we added INT_MAX, it will stop iterating
+             * once it reaches that.
+             */
             if(aNew[i] <= bNew[j]){
                 c[k] = aNew[i];
                 i++;
             }
-            else
+            else // b is smaller
             {
                 c[k] = bNew[j];
                 j++;
@@ -125,33 +141,34 @@ int main(int argc, char **argv)
              * since each k processor created a c array.
              */
             int *merge = malloc(sizeof(int)* (sizeC * k));
-            for(int i = 0; i < sizeC; i++)
-            {
-                merge[myRank + i] = c[i];
-            }
             
-            // Wait for merged arrays from each processes
-            for (int source = 1; source < processors; source++)
+            // Wait for c arrays from each processes
+            for (int source = 0; source < processors; source++)
             {
-                //printf("recieving from %d\n", source);
-                MPI_Recv(c, sizeC, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
+                if(source > 0)
+                { 
+                    // Receive from slave processes
+                    MPI_Recv(c, sizeC, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
+                }
                 for(int i = 0; i < sizeC; i++)
                 {
-                    //printf("source rank: %d, %d\n",source, (source * sizeC) + i);
+                    // Add to merge array
                     merge[(source*sizeC) + i] = c[i];
                 }
             }
 
-            // Merge all received arrays
+            // Output
             printf("[ ");
             for (int i = 0; i < (sizeC * k); i++){
                 printf("%d ", merge[i]);
             }
             printf("]\n");
+
             free(merge);
         }
         else // Slave processes
         {
+            // Send c array to master process to merge
             MPI_Send(c, sizeC, MPI_INT, masterProc, tag, MPI_COMM_WORLD);
         }
 
