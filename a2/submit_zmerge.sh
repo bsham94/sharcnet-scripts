@@ -10,5 +10,5 @@ source $SLURM_TMPDIR/env/bin/activate
 pip install --no-index --upgrade pip
 
 pip install --no-index -r requirements.txt
-
+chmod a+x zmerge.py
 srun ./zmerge.py
