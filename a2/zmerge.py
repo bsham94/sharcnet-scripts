@@ -124,7 +124,7 @@ merge = []
 i = 0
 j = 0
 # Begin the merging in ascending order
-for k in range(merge_size):
+for m in range(merge_size):
     if a_new[i] <= b_new[j]:
         # If both arrays are equally infinity
         if a_new[i] == math.inf and b_new[j] == math.inf:
