@@ -28,8 +28,8 @@ n = 128                 # Number of elements per array
 k = int(math.log(n, 2)) # Number of a[] elements per processor
 r = math.ceil(n/k)      # Number of processors required
 tag = 0                 # Tag for MPI
-masterProc = 0          # Master process
-lastProc = size - 1
+master_proc = 0          # Master process
+last_proc = size - 1
 
 # If we don't have enough processes, abort
 if size < r:
@@ -40,12 +40,11 @@ if size < r:
               ", you must allocate at least " + str(r) + " processors.")
     quit()
 
-
 a = []
 b = []
 # Randomly generate the arrays in master process
 # We will send them to the slave processes
-if my_rank == masterProc:
+if my_rank == master_proc:
     # The random arrays must be generated sorted
     # To do so, we just generate 0-3 and append the previous
     for i in range(n):
@@ -62,15 +61,15 @@ if my_rank == masterProc:
         comm.send(b, dest=source, tag=tag)
 else:
     # Slave processes wait to receive the arrays
-    a = comm.recv(source=masterProc, tag=tag)
-    b = comm.recv(source=masterProc, tag=tag)
+    a = comm.recv(source=master_proc, tag=tag)
+    b = comm.recv(source=master_proc, tag=tag)
 
 # Get the range for A
 a_start = (my_rank) * k
 a_end = (my_rank) * k + (k-1)
 # Last proc should just go until the end
 # Since it wont always have a full K elements
-if my_rank == lastProc:
+if my_rank == last_proc:
     a_end = n - 1
 
 # Get the range for B
@@ -79,10 +78,10 @@ if my_rank == lastProc:
 b_start = 0
 b_end = binary_search(b, 0, len(b) - 1, a[a_end])
 
-if my_rank == masterProc:
+if my_rank == master_proc:
     # Master proc only needs to send it's end value
     comm.send(b_end, dest=(my_rank+1), tag=tag)
-elif my_rank == lastProc:
+elif my_rank == last_proc:
     # Last proc only needs to receive it's start value
     b_start = comm.recv( source=(my_rank-1), tag=tag)
     # It runs until the end of B
@@ -161,4 +160,4 @@ if my_rank == 0:
     print("C was of length " + str(len(c)))
 else:
     # Slave processes send their merge array to master proc
-    comm.send(merge, dest=masterProc, tag=tag)
+    comm.send(merge, dest=master_proc, tag=tag)
