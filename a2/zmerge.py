@@ -2,6 +2,8 @@ from mpi4py import MPI
 import math
 import random
 
+# Binary search used to find the greatest index
+# of B that is less than the last A of a process
 def binary_search(a, start, end, value):
     if end >= start:
         mid = math.floor((start+end)/2)
@@ -11,21 +13,39 @@ def binary_search(a, start, end, value):
         if(a[mid]>value):
             return binary_search(a,start,mid -1, value)
         return binary_search(a,mid +1,end,value)
-    return -1
+    return -1 # We reached the end without finding a B value
 
-n = 32
+# Start MPI
 comm = MPI.COMM_WORLD
-size = comm.Get_size()
+# Find process rank
 my_rank = comm.Get_rank()
-tag = 0
-master = 0
-#a = [1,5,15,18,19,21,23,24,27,29,30,31,32,37,42,49]
-#b = [2,3,4,13,15,19,20,22,28,29,38,41,42,43,48,49]
-#a = [0, 3, 6, 8, 10, 13, 14, 14, 17, 18, 18, 18, 21, 21, 21, 22, 24, 27, 28, 28, 30, 31, 32, 34, 35, 37, 38, 39, 42, 45, 47, 48]
-#b = [2, 4, 6, 6, 8, 9, 9, 11, 11, 12, 12, 15, 17, 19, 19, 21, 23, 26, 29, 30, 32, 32, 32, 33, 33, 34, 35, 36, 39, 41, 41, 43]
+# Find number of processes
+size = comm.Get_size()
+
+n = 128                 # Number of elements per array
+k = int(math.log(n, 2)) # Number of a[] elements per processor
+r = math.ceil(n/k)      # Number of processors required
+tag = 0                 # Tag for MPI
+masterProc = 0          # Master process
+lastProc = size - 1
+
+# If we don't have enough processes, abort
+if size < r:
+    # Only output from master process
+    if my_rank == 0:
+        print("[ ERROR ] Not enough processors allocated.")
+        print("To parallel merge arrays of size " + str(n) +
+              ", you must allocate at least " + str(r) + " processors.")
+    quit()
+
+
 a = []
 b = []
-if my_rank == 0:
+# Randomly generate the arrays in master process
+# We will send them to the slave processes
+if my_rank == masterProc:
+    # The random arrays must be generated sorted
+    # To do so, we just generate 0-3 and append the previous
     for i in range(n):
         a_val = random.randint(0, 3)
         b_val = random.randint(0, 3)
@@ -34,79 +54,109 @@ if my_rank == 0:
             b_val = b_val + b[i-1]
         a.append(a_val)
         b.append(b_val)
+    # Send to each slave process
     for source in range(1, size):
         comm.send(a, dest=source, tag=tag)
         comm.send(b, dest=source, tag=tag)
 else:
-    a = comm.recv(source=master, tag=tag)
-    b = comm.recv(source=master, tag=tag)
-k = int(math.log(n, 2))
-r = n/k
+    # Slave processes wait to receive the arrays
+    a = comm.recv(source=masterProc, tag=tag)
+    b = comm.recv(source=masterProc, tag=tag)
+
+# Get the range for A
 a_start = (my_rank) * k
 a_end = (my_rank) * k + (k-1)
-if my_rank == size - 1:
+# Last proc should just go until the end
+# Since it wont always have a full K elements
+if my_rank == lastProc:
     a_end = n - 1
+
+# Get the range for B
+# Start will be sent to us if we are not master
+# End is found through binary search
 b_start = 0
 b_end = binary_search(b, 0, len(b) - 1, a[a_end])
 
-if my_rank == 0:
+if my_rank == masterProc:
+    # Master proc only needs to send it's end value
     comm.send(b_end, dest=(my_rank+1), tag=tag)
-elif my_rank == size - 1:
+elif my_rank == lastProc:
+    # Last proc only needs to receive it's start value
     b_start = comm.recv( source=(my_rank-1), tag=tag)
+    # It runs until the end of B
     b_end = n
 else:
+    # Every other process receives it's start value 
     b_start = comm.recv(source=(my_rank-1), tag=tag)
+    # If it starts at -1, we've reached the end of B already
     if b_start < 0:
+        # So send -1 to the next proc too
         b_end = -1
     comm.send(b_end, dest=(my_rank+1), tag=tag)
 
+# Check if end was -1 and change it to full range
+# Needed in cases where start is defined but end was not found
+# If start is -1 too, then this won't matter
 if b_end < 0:
     b_end = n
 
+# Decrement b_end so it doesn't overlap with another process
 b_end = b_end - 1
-print("rank " + str(my_rank) + ", a_start " + str(a_start) + ", a_end " + str(a_end) + ", b_start " + str(b_start) + ", b_end " + str(b_end))
+
+# Calculate our array sizes
 a_size = (a_end - a_start) + 1
 b_size = (b_end - b_start) + 1
-c_size = a_size + b_size
+merge_size = a_size + b_size
 
+# Crop A for our current process
 a_new = a[a_start:a_end + 1]
-a_new.append(math.inf)
+# Only grab B elements if we were given a range
 b_new = []
 if b_start > -1 and b_end > -1:
     b_new = b[b_start:b_end + 1]
+# Add infinity to signal end of array
+# This helps with merging
+a_new.append(math.inf)
 b_new.append(math.inf)
-c = []
+
+merge = []
 i = 0
 j = 0
-for k in range(c_size):
-    if my_rank == size - 1:
-        print("comparing a: " + str(a_new[i]) + " to " + (str(b_new[j])) + " size " + str(c_size))
+# Begin the merging in ascending order
+for k in range(merge_size):
     if a_new[i] <= b_new[j]:
+        # If both arrays are equally infinity
         if a_new[i] == math.inf and b_new[j] == math.inf:
-            print("breaking")
+            # Then we've reached the end
             break
         else:
-            c.append(a_new[i])
+            # Otherwise, append A
+            # Since it's smaller or equal
+            merge.append(a_new[i])
             i = i + 1
     else:
-        c.append(b_new[j])
+        # If B is smaller, append it
+        merge.append(b_new[j])
         j = j + 1
 
-if my_rank == size - 1:
-    print(a_new)
-    print(b_new)
-    print(c)
-
 if my_rank == 0:
+    # Master proc outputs the arrays
+    print("A:---------------------------------------------------------")
     print(a)
+    print("B:---------------------------------------------------------")
     print(b)
-    merge = []
-    merge.extend(c)
+    print("C:---------------------------------------------------------")
+    c = []
+    # Start with the master merge array
+    c.extend(merge)
     for source in range(1, size):
-        c = comm.recv(source=source, tag=tag)
-        #print(c)
-        merge.extend(c)
-    print(merge)
-    print(len(merge))
+        # Merge in each merged array from each source
+        merge = comm.recv(source=source, tag=tag)
+        c.extend(merge)
+    # Output entire product
+    print(c)
+    print("------------------------------------------------------------")
+    print("C was of length " + str(len(c)))
 else:
-    comm.send(c, dest=master, tag=tag)
+    # Slave processes send their merge array to master proc
+    comm.send(merge, dest=masterProc, tag=tag)
