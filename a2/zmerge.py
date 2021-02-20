@@ -64,18 +64,20 @@ c_size = a_size + b_size
 
 a_new = a[a_start:a_end + 1]
 a_new.append(math.inf)
+b_new = []
 if b_start > -1 and b_end > -1:
     b_new = b[b_start:b_end + 1]
-else:
-    b_new = []
 b_new.append(math.inf)
 c = []
 i = 0
 j = 0
 for k in range(c_size):
     if a_new[i] <= b_new[j]:
-        c.append(a_new[i])
-        i = i + 1
+        if a_new[i] == math.inf and b_new[j] == math.inf:
+            break
+        else:
+            c.append(a_new[i])
+            i = i + 1
     else:
         c.append(b_new[j])
         j = j + 1
