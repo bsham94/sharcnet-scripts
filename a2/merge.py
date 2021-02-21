@@ -68,7 +68,7 @@ a = []
 b = []
 c = []
 
-array_size = 10000           # Size of arrays
+array_size = 1000000000           # Size of arrays
 tag = 0                     # Tag for MPI
 master_proc = 0             # Master process
 last_proc = processors - 1  # Final process
@@ -154,6 +154,7 @@ if my_rank == master_proc:
         # Merge in each merged array from each source
         c_current = comm.recv(source=source, tag=tag)
         c.extend(c_current)
+    print("{n} elements per array, computed on {p} processors.".format(n=array_size, p=processors))
     print("Completed in {:.3f} seconds.".format(time.time() - start_time))
     print("Index 0: {}".format(c[0]))
     print("Index 10: {}".format(c[10]))
