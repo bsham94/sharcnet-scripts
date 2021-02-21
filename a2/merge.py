@@ -32,18 +32,17 @@ def merge_arrays(a, b):
             j = j + 1
     return c
 
-
 def binary_search(a, start, end, value):
     if end >= start:
         mid = math.floor((start+end)/2)
         if a[mid] >= value:
             if (mid-1) >= 0 and a[mid-1] <= value:
                 return mid
-        if(a[mid] > value):
-            return binary_search(a, start, mid - 1, value)
-        return binary_search(a, mid + 1, end, value)
+        elif a[mid] > value:
+            mid = mid - 1
+        else:
+            mid = mid + 1
     return -1  # We reached the end without finding a B value
-
 
 def calculate_range(rank, n, p):
     # Pigeonhole principal
@@ -68,7 +67,7 @@ a = []
 b = []
 c = []
 
-array_size = 1000000000           # Size of arrays
+array_size = 1000000           # Size of arrays
 tag = 0                     # Tag for MPI
 master_proc = 0             # Master process
 last_proc = processors - 1  # Final process
@@ -76,7 +75,6 @@ last_proc = processors - 1  # Final process
 # Randomly generate the arrays in master process
 # We will send them to the slave processes
 if my_rank == master_proc:
-    start_time = time.time()
     # The random arrays must be generated sorted
     # To do so, we just generate 0-3 and append the previous
     for i in range(array_size):
@@ -91,6 +89,7 @@ if my_rank == master_proc:
     for source in range(1, processors):
         comm.send(a, dest=source, tag=tag)
         comm.send(b, dest=source, tag=tag)
+    start_time = time.time()
 else:
     # Slave processes wait to receive the arrays
     a = comm.recv(source=master_proc, tag=tag)
@@ -132,28 +131,18 @@ if b_end < 0:
 # Decrement b_end so it doesn't overlap with another process
 b_end = b_end - 1
 
-# Crop arrays from start and end
-a_current = a[a_start:a_end + 1]
-# Only grab B elements if we were given a range
-b_current = []
-if b_start > -1 and b_end > -1:
-    b_current = b[b_start:b_end + 1]
 # Run the merge
-c_current = merge_arrays(a_current, b_current)
-
-if my_rank == master_proc:
-    # Master proc starts the c array
-    c.extend(c_current)
+if b_start > -1 and b_end > -1:
+    c.extend(merge_arrays(a[a_start:a_end + 1], b[b_start:b_end + 1]))
 else:
-    # Other processes send to master
-    comm.send(c_current, dest=master_proc, tag=tag)
+    c.extend(merge_arrays(a[a_start:a_end + 1], []))
 
 if my_rank == master_proc:
+    
     # Grab all waiting arrays and merge
     for source in range(master_proc + 1, processors):
         # Merge in each merged array from each source
-        c_current = comm.recv(source=source, tag=tag)
-        c.extend(c_current)
+        c.extend(comm.recv(source=source, tag=tag))
     print("{n} elements per array, computed on {p} processors.".format(n=array_size, p=processors))
     print("Completed in {:.3f} seconds.".format(time.time() - start_time))
     print("Index 0: {}".format(c[0]))
@@ -162,3 +151,6 @@ if my_rank == master_proc:
     print("Index n-10: {}".format(c[int(len(c)-11)]))
     print("Index n: {}".format(c[int(len(c)-1)]))
     print("C was of length {}.".format(len(c)))
+else:
+    # Other processes send to master
+    comm.send(c, dest=master_proc, tag=tag)
