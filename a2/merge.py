@@ -67,7 +67,7 @@ a = []
 b = []
 c = []
 
-array_size = 1000000           # Size of arrays
+array_size = 1000000000           # Size of arrays
 tag = 0                     # Tag for MPI
 master_proc = 0             # Master process
 last_proc = processors - 1  # Final process
