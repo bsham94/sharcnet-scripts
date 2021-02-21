@@ -135,10 +135,10 @@ b_end = b_end - 1
 if b_start > -1 and b_end > -1:
     c.extend(merge_arrays(a[a_start:a_end + 1], b[b_start:b_end + 1]))
 else:
+    # B isn't allotted, pass an empty array
     c.extend(merge_arrays(a[a_start:a_end + 1], []))
 
 if my_rank == master_proc:
-    
     # Grab all waiting arrays and merge
     for source in range(master_proc + 1, processors):
         # Merge in each merged array from each source
