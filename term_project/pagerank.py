@@ -50,5 +50,10 @@ with open(infile, 'r') as fp:
         outlinks.append(cur_outlink)
         # Move to the next line
         line = fp.readline()
+
+
+for i in range(0, 15):
+    h[14][i] = 1/15
+
 print(h)
-np.savetxt('out.csv', h, delimiter=",", fmt='%1.2f')
+np.savetxt('out.csv', h, delimiter=",", fmt='%1.4f')
