@@ -32,7 +32,7 @@ with open(infile, 'r') as fp:
         cur_site = int(val[0])
         cur_outlink = int(val[1])
         # Count how many times we've seen the current site
-        counts[cur_site-1] += 1 
+        counts[cur_site-1] += 1
         # Does it match the previous site we saw?
         if prev_site != cur_site:
             # No, then we're done with the previous site
@@ -51,9 +51,46 @@ with open(infile, 'r') as fp:
         # Move to the next line
         line = fp.readline()
 
+e = np.array([
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+    [1],
+])
 
-for i in range(0, 15):
-    h[14][i] = 1/15
+a = np.array([
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [0],
+    [1],
+])
 
-print(h)
+s = h + a * ((1/num_sites) * e.transpose())
+
+alpha = 0.85
+g = (s * alpha) + (1-alpha)*((1/num_sites)*e*e.transpose())
+
+print(g)
 np.savetxt('out.csv', h, delimiter=",", fmt='%1.4f')
