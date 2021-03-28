@@ -20,6 +20,7 @@ infile = 'toy_example.txt'  # File to read
 counts = [0] * num_sites    # Zeroed array to hold counts
 prev_site = -1              # Previous site
 outlinks = []               # Outlink from previous site
+dangling = []
 
 # Create hyperlink matrix from file
 h = np.zeros((num_sites, num_sites))
@@ -69,23 +70,10 @@ e = np.array([
     [1],
 ])
 
-a = np.array([
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [1],
-])
+a = np.zeros((num_sites, 1))
+for i in range(0, 15):
+    if counts[i] == 0:
+        a[i] = 1
 
 s = h + a * ((1/num_sites) * e.transpose())
 
