@@ -21,6 +21,7 @@ counts = [0] * num_sites    # Zeroed array to hold counts
 prev_site = -1              # Previous site
 outlinks = []               # Outlink from previous site
 dangling = []
+cur_site = 0
 
 # Create hyperlink matrix from file
 h = np.zeros((num_sites, num_sites))
@@ -51,6 +52,9 @@ with open(infile, 'r') as fp:
         outlinks.append(cur_outlink)
         # Move to the next line
         line = fp.readline()
+    prob = 1 / counts[cur_site - 1]
+    for link in outlinks:
+        h[cur_site-1][link-1] = prob
 
 e = np.array([
     [1],
@@ -67,46 +71,47 @@ e = np.array([
     [1],
     [1],
     [1],
-    [1],
+    [1]
 ])
 
+
 a = np.zeros((num_sites, 1))
-for i in range(0, 15):
+for i in range(0, num_sites):
     if counts[i] == 0:
         a[i] = 1
 
-h = np.around(h,decimals=rounding)
 s = h + a * ((1/num_sites) * e.transpose())
-s = np.around(s,decimals=rounding)
 
 alpha = 0.85
-g = (s * alpha) + (1-alpha)*((1/num_sites)*e.dot(e.transpose()))
-g = np.around(g,decimals=rounding)
+bigE = e.dot(e.transpose())
+g = (s * alpha) + (1-alpha)*((1/num_sites)*bigE)
 
 r = np.array([
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
+    [1/23],
+    [1/43],
+    [1/34],
+    [1/11],
+    [1/76],
+    [1/34],
+    [1/23],
+    [1/43],
+    [1/34],
+    [1/11],
+    [1/76],
+    [1/34],
+    [1/23],
+    [1/43],
+    [1/34],
 ])
-r = np.around(r,decimals=rounding)
 prev_r = np.zeros((num_sites, 1))
+print(g)
 
-while not(np.array_equal(prev_r, r)):
-    prev_r = r
-    r = g.dot(r)
-    r = np.around(r,decimals=rounding)
+i = 0
+while not(np.array_equal(prev_r, r)) and i < 100:
+    prev_r = r.copy()
+    r = np.dot(g,r)
+    print(r)
+    i += 1
 
-print(r)
+print(i)
 np.savetxt('out.csv', r, delimiter=",", fmt='%1.4f')
