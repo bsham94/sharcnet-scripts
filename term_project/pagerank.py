@@ -87,31 +87,31 @@ bigE = e.dot(e.transpose())
 g = (s * alpha) + (1-alpha)*((1/num_sites)*bigE)
 
 r = np.array([
-    [1/23],
-    [1/43],
-    [1/34],
-    [1/11],
-    [1/76],
-    [1/34],
-    [1/23],
-    [1/43],
-    [1/34],
-    [1/11],
-    [1/76],
-    [1/34],
-    [1/23],
-    [1/43],
-    [1/34],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
+    [1/num_sites],
 ])
 prev_r = np.zeros((num_sites, 1))
-print(g)
 
 i = 0
-while not(np.array_equal(prev_r, r)) and i < 100:
-    prev_r = r.copy()
-    r = np.dot(g,r)
-    print(r)
+while not(np.array_equal(prev_r, r)) and i < 1000:
+    prev_r = np.copy(r)
+    r = np.dot(g.transpose(),np.copy(r))
+    r = np.around(r.copy(), decimals=10)
     i += 1
 
+print(r)
 print(i)
-np.savetxt('out.csv', r, delimiter=",", fmt='%1.4f')
+np.savetxt('out.csv', h, delimiter=",", fmt='%1.4f')
