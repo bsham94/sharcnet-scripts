@@ -1,19 +1,7 @@
 #!/usr/bin/env python3
-
-from mpi4py import MPI
 import numpy as np
 
-# Start MPI
-comm = MPI.COMM_WORLD
-# Find process rank
-my_rank = comm.Get_rank()
-# Find number of processes
-processors = comm.Get_size()
-
 # General settings/variables
-tag = 0                     # Tag for MPI
-master_proc = 0             # Master process
-last_proc = processors - 1  # Final process
 num_sites = 15              # Number of sites
 infile = 'toy_example.txt'  # File to read
 
