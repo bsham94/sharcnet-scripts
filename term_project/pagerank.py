@@ -10,20 +10,19 @@ my_rank = comm.Get_rank()
 # Find number of processes
 processors = comm.Get_size()
 
+# General settings/variables
 tag = 0                     # Tag for MPI
 master_proc = 0             # Master process
 last_proc = processors - 1  # Final process
 num_sites = 15              # Number of sites
 infile = 'toy_example.txt'  # File to read
-rounding = 12
 
+
+# Create hyperlink matrix from file
 counts = [0] * num_sites    # Zeroed array to hold counts
 prev_site = -1              # Previous site
 outlinks = []               # Outlink from previous site
-dangling = []
-cur_site = 0
-
-# Create hyperlink matrix from file
+cur_site = 0                # Current site number
 h = np.zeros((num_sites, num_sites))
 with open(infile, 'r') as fp:
     # Read the first line
@@ -56,62 +55,31 @@ with open(infile, 'r') as fp:
     for link in outlinks:
         h[cur_site-1][link-1] = prob
 
-e = np.array([
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1],
-    [1]
-])
-
-
+# Stochasticity adjustment
+e = np.array([[1] for x in range(num_sites)])
 a = np.zeros((num_sites, 1))
 for i in range(0, num_sites):
     if counts[i] == 0:
         a[i] = 1
-
 s = h + a * ((1/num_sites) * e.transpose())
 
+# Primitivity adjustment
 alpha = 0.85
 bigE = e.dot(e.transpose())
 g = (s * alpha) + (1-alpha)*((1/num_sites)*bigE)
-
-r = np.array([
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-    [1/num_sites],
-])
+r = np.array([[1/num_sites] for x in range(num_sites)])
 prev_r = np.zeros((num_sites, 1))
 
-i = 0
+# Iterate to calculate PageRank
+iterations = 0
 while not(np.array_equal(prev_r, r)) and i < 1000:
     prev_r = np.copy(r)
     r = np.dot(g.transpose(),np.copy(r))
     r = np.around(r.copy(), decimals=10)
-    i += 1
+    iterations += 1
 
-print(r)
-print(i)
-np.savetxt('out.csv', h, delimiter=",", fmt='%1.4f')
+sortedList = sorted(((v, i) for i, v in enumerate(r)), reverse=True)
+print("Final PageRank vector:")
+for i, (value, index) in enumerate(sortedList):
+    print("#{0} -> Site {1}, PageRank {2}".format(i+1, index+1, value))
+print("Converged in: " + str(iterations) + " iterations")
