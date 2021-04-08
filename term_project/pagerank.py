@@ -15,7 +15,7 @@ master_proc = 0             # Master process
 last_proc = processors - 1  # Final process
 num_sites = 15              # Number of sites
 infile = 'toy_example.txt'  # File to read
-rounding = 12
+rounding = 4
 
 counts = [0] * num_sites    # Zeroed array to hold counts
 prev_site = -1              # Previous site
@@ -75,13 +75,13 @@ for i in range(0, 15):
     if counts[i] == 0:
         a[i] = 1
 
-h = np.around(h,decimals=rounding)
+#h = np.around(h, decimals=rounding)
 s = h + a * ((1/num_sites) * e.transpose())
-s = np.around(s,decimals=rounding)
+#s = np.around(s, decimals=rounding)
 
 alpha = 0.85
 g = (s * alpha) + (1-alpha)*((1/num_sites)*e.dot(e.transpose()))
-g = np.around(g,decimals=rounding)
+#g = np.around(g, decimals=rounding)
 
 r = np.array([
     [1/num_sites],
@@ -100,13 +100,16 @@ r = np.array([
     [1/num_sites],
     [1/num_sites],
 ])
-r = np.around(r,decimals=rounding)
+#r = np.around(r, decimals=rounding)
 prev_r = np.zeros((num_sites, 1))
-
+i = 0
 while not(np.array_equal(prev_r, r)):
     prev_r = r
     r = g.dot(r)
-    r = np.around(r,decimals=rounding)
+    #r = np.around(r, decimals=rounding)
+    i += 1
 
-print(r)
+for number in r:
+    print("%.4f" % number)
+
 np.savetxt('out.csv', r, delimiter=",", fmt='%1.4f')
