@@ -1,9 +1,31 @@
 #!/usr/bin/env python3
 import numpy as np
+from mpi4py import MPI
+
+def calculate_range(rank, n, p):
+    result = (n/p)
+    number = 0
+    # min(rank, mod(n,p)) is added to range
+    if(rank < (n % p)):
+        number = rank
+    else:
+        number = n % p
+    return int((rank * result) + number)
+
+# Start MPI
+comm = MPI.COMM_WORLD
+# Find process rank
+my_rank = comm.Get_rank()
+# Find number of processes
+processors = comm.Get_size()
+
 
 # General settings/variables
 num_sites = 15              # Number of sites
 infile = 'toy_example.txt'  # File to read
+tag = 0                     # Tag for MPI
+master_proc = 0             # Master process
+last_proc = processors - 1  # Final process
 
 
 # Create hyperlink matrix from file
