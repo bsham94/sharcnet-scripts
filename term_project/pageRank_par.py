@@ -9,7 +9,7 @@ infile = 'toy_example.txt'  # File to read
 txtarr = []
 counts = [0] * num_sites    # Zeroed array to hold counts
 
-with open("C:/Users/Karan Grewal/Desktop/page_rank/"+infile, 'r') as fp:
+with open(infile, 'r') as fp:
     line=fp.readline()
     prev_site = 0
     outlinks=[]
@@ -44,14 +44,14 @@ with open("C:/Users/Karan Grewal/Desktop/page_rank/"+infile, 'r') as fp:
     print("size is",processors)
     
 	#the size of each chunk the processors are in charge of
-	k = len(txtarr) // processors
+    k = len(txtarr) # processors
 	
-	if my_rank == 0:
-		arr_start = my_rank*k +1
-	else:
-		arr_start = my_rank*k
+    if my_rank == 0:
+        arr_start = my_rank*k +1
+    else:
+        arr_start = my_rank*k
 	
-	arr_end = arr_start+k
+    arr_end = arr_start+k
 	
     for i in range(arr_start,arr_end):
         if len(txtarr[i])!=0:
