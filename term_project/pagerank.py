@@ -62,10 +62,10 @@ prev_r = np.zeros((num_sites, 1))
 iterations = 0
 while not(np.array_equal(prev_r, r)) and i < 1000:
     prev_r = np.copy(r)
-    r = np.dot(g.transpose(),np.copy(r))
+    r = np.dot(g.transpose(), np.copy(r))
     r = np.around(r.copy(), decimals=10)
     iterations += 1
-
+print(g.transpose())
 sortedList = sorted(((v, i) for i, v in enumerate(r)), reverse=True)
 print("Final PageRank vector:")
 for i, (value, index) in enumerate(sortedList):

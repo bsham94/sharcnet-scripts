@@ -49,7 +49,6 @@ print(f'Rank: {my_rank} Lower: {lower} Upper: {upper}')
 dangle = float(1/n)
 a = 0.85
 ee = (1-a)*(dangle*1)
-print(ee)
 array = np.full((n, n), ee, float)
 for line in lines:
     l = line.split()
@@ -61,7 +60,7 @@ for line in lines:
             else:
                 array[int(l[0])][int(l[1])] = (float(l[2]) * a) + ee
 array = array.transpose()
-# print(array)
+print(array)
 #prev_r = np.full((n, 1), 0)
 r = np.zeros((n, 1))
 prev_r = np.full((n, 1), dangle, float)
@@ -72,7 +71,7 @@ while not(np.array_equal(prev_r, r)) and count < 34:
         r[i] = np.dot(array[i], prev_r)
         # r = np.around(r.copy(), decimals=10)
     comm.Allgatherv(r[lower:upper], r)
-    prev_r = np.around(r, decimals=10)
+    prev_r = np.around(r, decimals=10).copy()
     count = count + 1
     if my_rank == 0:
         print(r)
