@@ -1,8 +1,6 @@
+#!/usr/bin/env python3
 from mpi4py import MPI
 import numpy as np
-import math
-import random
-import time
 
 
 def calculate_range(rank, n, p):
