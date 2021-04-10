@@ -42,6 +42,19 @@ else:
     lower = calculate_range(my_rank, n, p)
     upper = n
 
+# Broadcast lower starting range to other processes
+lowers = []
+# Also broadcast sizes
+sizes = []
+# We need these for allgatherv later on
+for s in range(p):
+    lowers.append(comm.bcast(lower, root=s))
+    sizes.append(comm.bcast((upper - lower), root=s))
+lowers = tuple(lowers) # Need it as a tuple
+sizes = tuple(sizes) # Same here
+print(lowers)
+print(sizes)
+
 print(f'Rank: {my_rank} Lower: {lower} Upper: {upper}')
 
 dangle = float(1/n)
@@ -63,12 +76,12 @@ print(array)
 r = np.zeros((n, 1))
 prev_r = np.full((n, 1), dangle, float)
 count = 0
-while not(np.array_equal(prev_r, r)) and count < 34:
+while not(np.array_equal(prev_r, r)) and count < 100:
     #prev_r = r.copy()
     for i in range(lower, upper):
         r[i] = np.dot(array[i], prev_r)
-        # r = np.around(r.copy(), decimals=10)
-    comm.Allgatherv(r[lower:upper], r)
+        #r = np.around(r.copy(), decimals=10)
+    comm.Allgatherv([r[lower:upper], MPI.DOUBLE], [r, sizes, lowers, MPI.DOUBLE])
     prev_r = np.around(r, decimals=10).copy()
     count = count + 1
     if my_rank == 0:
