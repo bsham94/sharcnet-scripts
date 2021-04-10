@@ -71,27 +71,19 @@ for line in lines:
             else:
                 array[int(l[0])][int(l[1])] = (float(l[2]) * a) + ee
 array = array.transpose()
-print(array)
-#prev_r = np.full((n, 1), 0)
+
 r = np.zeros((n, 1))
 prev_r = np.full((n, 1), dangle, float)
 count = 0
 while not(np.array_equal(prev_r, r)) and count < 100:
-    #prev_r = r.copy()
     for i in range(lower, upper):
         r[i] = np.dot(array[i], prev_r)
-        #r = np.around(r.copy(), decimals=10)
     comm.Allgatherv([r[lower:upper], MPI.DOUBLE], [r, sizes, lowers, MPI.DOUBLE])
     prev_r = np.around(r, decimals=10).copy()
     count = count + 1
-    if my_rank == 0:
-        print(r)
-        print(count)
 
-# if my_rank == 0:
-#     print(array)
-#     for i in r:
-#         print(i)
+if my_rank == 0:
+    print(r)
 
 # # Ax = b
 # # Each process calculates (upper - lower) amount values of the b vector and broadcasts its to the other processes
