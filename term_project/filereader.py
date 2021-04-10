@@ -31,6 +31,7 @@ file = open("lecture.txt", 'r')
 # file = open("toy_example.txt", 'r')
 
 lines = file.readlines()
+file.close()
 
 if my_rank == 0:
     lower = 0
