@@ -52,3 +52,7 @@ Mkfile.old
 dkms.conf
 .vscode/settings.json
 .vscode/launch.json
+
+
+# Misc
+**out.*
