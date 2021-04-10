@@ -60,7 +60,7 @@ prev_r = np.zeros((num_sites, 1))
 
 # Iterate to calculate PageRank
 iterations = 0
-while not(np.array_equal(prev_r, r)) and i < 1000:
+while not(np.array_equal(prev_r, r)) and iterations < 1000:
     prev_r = np.copy(r)
     r = np.dot(g.transpose(), np.copy(r))
     r = np.around(r.copy(), decimals=10)
