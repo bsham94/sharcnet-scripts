@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from mpi4py import MPI
 import numpy as np
-
+import time
 
 def calculate_range(rank, n, p):
     # Pigeonhole principal
@@ -53,10 +53,11 @@ for s in range(p):
     sizes.append(comm.bcast((upper - lower), root=s))
 lowers = tuple(lowers) # Need it as a tuple
 sizes = tuple(sizes) # Same here
-print(lowers)
-print(sizes)
 
-print(f'Rank: {my_rank} Lower: {lower} Upper: {upper}')
+# Synchronize for timing
+comm.Barrier()
+if my_rank == 0:
+    start_time = time.time()
 
 dangle = float(1/n)
 a = 0.85
@@ -80,14 +81,23 @@ while not(np.array_equal(prev_r, r)) and count < 100:
     for i in range(lower, upper):
         r[i] = np.dot(array[i], prev_r)
     comm.Allgatherv([r[lower:upper], MPI.DOUBLE], [r, sizes, lowers, MPI.DOUBLE])
-    prev_r = np.around(r, decimals=10).copy()
+    prev_r = r.copy()
     count = count + 1
 
+# Synchronize all done
+comm.Barrier()
 if my_rank == 0:
+    end_time = time.time()
+    r = np.around(r, decimals=10)
     sortedList = sorted(((v, i) for i, v in enumerate(r)), reverse=True)
-    print("Final PageRank vector:")
+    outFile = open("out.txt", "w")
+    outFile.write("Final PageRank vector:\n")
     for i, (value, index) in enumerate(sortedList):
-        print("#{0} -> Site {1}, PageRank {2}".format(i+1, index+1, value))
+        outFile.write("#{0} -> Site {1}, PageRank {2}\n".format(i+1, index+1, value))
+    timing = "Completed in {:.3f} seconds.".format(end_time - start_time)
+    print(timing)
+    outFile.write(timing)
+    outFile.close()
 
 # # Ax = b
 # # Each process calculates (upper - lower) amount values of the b vector and broadcasts its to the other processes
