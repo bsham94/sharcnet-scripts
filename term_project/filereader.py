@@ -84,7 +84,10 @@ while not(np.array_equal(prev_r, r)) and count < 100:
     count = count + 1
 
 if my_rank == 0:
-    print(r)
+    sortedList = sorted(((v, i) for i, v in enumerate(r)), reverse=True)
+    print("Final PageRank vector:")
+    for i, (value, index) in enumerate(sortedList):
+        print("#{0} -> Site {1}, PageRank {2}".format(i+1, index+1, value))
 
 # # Ax = b
 # # Each process calculates (upper - lower) amount values of the b vector and broadcasts its to the other processes
