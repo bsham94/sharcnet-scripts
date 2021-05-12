@@ -1,11 +1,29 @@
-## BUILD
-`mpicc primes.c -o primes -lmpi`
+# Prime Gaps
+Calculates the largest gap between a pair of consecutive prime numbers.
 
-## RUN
-`sbatch submit_primes.sh`
+## Usage
+This C file is intended to be run on SHARCNET computers. The following are some simple bash commands to view the job progress and results.
 
-## VIEW
-`squeue -u cp431g4`
+### Compiling with MPI
+```bash
+mpicc primes.c -o primes -lmpi
+```
 
-## OUTPUT
-`more slurm-[job-id]`
+### Queuing the Job
+> Note: Make sure to modify `submit_primes.sh` before queuing. 
+
+```bash
+sbatch submit_primes.sh
+```
+
+### Viewing Job Queue
+> Note: This will show all jobs currently running under your login name. Your login name may be different than your account name on SHARCNET.
+
+```bash
+squeue -u <LOGIN NAME>
+```
+
+### Opening Output Slurm
+```bash
+more slurm-[job-id]
+```
